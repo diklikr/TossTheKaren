@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class PlayerHUD : MonoBehaviour
 {
@@ -14,10 +15,20 @@ public class PlayerHUD : MonoBehaviour
     [SerializeField] Slider launchSlider;
     [SerializeField] RawImage explod;
 
+    [Header("Player height slider")]
+    [SerializeField] Slider PlayerHeightSlider;
+    [SerializeField] Transform Player;
+    [SerializeField] float MaxHeight = 1000f;
+
+    [Header("Distance tracker")]
+    [SerializeField] TMP_Text distanceText;    // shows e.g. "25m"
+
     [Header("Bounce counter")]
     [SerializeField] List<RawImage> bounceImages = new List<RawImage>();
 
     int bouncesLeft;
+    float startX;
+    float maxDistance;
 
     void Start()
     {
@@ -27,15 +38,45 @@ public class PlayerHUD : MonoBehaviour
         explod.gameObject.SetActive(false);
         shootKaren.gameObject.SetActive(false);
 
+        PlayerHeightSlider.minValue = 0f;
+        PlayerHeightSlider.maxValue = MaxHeight;
+        PlayerHeightSlider.value = 0f;
+
+        startX = Player.position.x;
+        maxDistance = 0f;
+        distanceText.text = "0m";
+
         bouncesLeft = bounceImages.Count;
         foreach (RawImage img in bounceImages)
             img.gameObject.SetActive(true);
     }
 
+    void Update()
+    {
+        UpdateHeightSlider();
+        UpdateDistance();
+    }
+
+    void UpdateHeightSlider()
+    {
+        if (Player == null || PlayerHeightSlider == null) return;
+
+        PlayerHeightSlider.value = Mathf.Clamp(Player.position.y, 0f, MaxHeight);
+    }
+
+    void UpdateDistance()
+    {
+        if (Player == null || distanceText == null) return;
+
+        // Furthest distance reached, so it never goes down if the player bounces back
+        maxDistance = Mathf.Max(maxDistance, Player.position.x - startX);
+        distanceText.text = Mathf.FloorToInt(maxDistance) + "m";
+    }
+
     public void SetAngle()
     {
         angleButton.gameObject.SetActive(false);
-        launcher.OnAngle();                       // also starts the force bar
+        launcher.OnAngle();
         launchButton.gameObject.SetActive(true);
         launchSlider.gameObject.SetActive(true);
         explod.gameObject.SetActive(true);
