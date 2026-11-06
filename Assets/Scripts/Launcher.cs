@@ -60,18 +60,15 @@ public class Launcher : MonoBehaviour
         launched = true;
 
         Rigidbody rb = Player.GetComponent<Rigidbody>();
-        rb.linearVelocity = Vector3.zero; // use rb.velocity on older Unity versions
+        rb.linearVelocity = Vector3.zero;
         rb.AddForce(Cannon.transform.forward * LaunchForce, ForceMode.Impulse);
     }
-
-    // Bar goes 0 -> 100 -> 0 quickly, repeating
     void UpdateSlider()
     {
         LaunchForce = Mathf.PingPong(Time.time * ForceSpeed, MaxLaunchForce);
         LaunchBAR.value = LaunchForce;
     }
 
-    // Cannon rotates on the X axis between 0 and MaxAngle
     void UpdateAngle()
     {
         launchAngle = Mathf.PingPong(Time.time * AngleSpeed, MaxAngle);
