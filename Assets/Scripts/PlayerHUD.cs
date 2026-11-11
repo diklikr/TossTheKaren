@@ -21,7 +21,7 @@ public class PlayerHUD : MonoBehaviour
     [SerializeField] float MaxHeight = 1000f;
 
     [Header("Distance tracker")]
-    [SerializeField] TMP_Text distanceText;    // shows e.g. "25m"
+    [SerializeField] TMP_Text distanceText;
 
     [Header("Bounce counter")]
     [SerializeField] List<RawImage> bounceImages = new List<RawImage>();
@@ -31,6 +31,17 @@ public class PlayerHUD : MonoBehaviour
     float maxDistance;
 
     void Start()
+    {
+        ResetHUD();
+    }
+
+    void Update()
+    {
+        UpdateHeightSlider();
+        UpdateDistance();
+    }
+
+    public void ResetHUD()
     {
         angleButton.gameObject.SetActive(true);
         launchButton.gameObject.SetActive(false);
@@ -51,12 +62,6 @@ public class PlayerHUD : MonoBehaviour
             img.gameObject.SetActive(true);
     }
 
-    void Update()
-    {
-        UpdateHeightSlider();
-        UpdateDistance();
-    }
-
     void UpdateHeightSlider()
     {
         if (Player == null || PlayerHeightSlider == null) return;
@@ -68,7 +73,6 @@ public class PlayerHUD : MonoBehaviour
     {
         if (Player == null || distanceText == null) return;
 
-        // Furthest distance reached, so it never goes down if the player bounces back
         maxDistance = Mathf.Max(maxDistance, Player.position.x - startX);
         distanceText.text = Mathf.FloorToInt(maxDistance) + "m";
     }

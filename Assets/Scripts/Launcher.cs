@@ -26,6 +26,7 @@ public class Launcher : MonoBehaviour
     bool launched;
     bool animatorWasEnabled;
 
+    [SerializeField] GameManager gameManager;
     void Start()
     {
         if (LaunchBAR == null || RagdollRoot == null || Cannon == null)
@@ -91,6 +92,10 @@ public class Launcher : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
             rb.AddForce(launchVelocity, ForceMode.VelocityChange);
         }
+        if (gameManager != null)
+            gameManager.StartMovementCheck();
+        else
+            Debug.LogError("Assign the GameManager in the Launcher Inspector.", this);
     }
     public void OnBounce()
     {
