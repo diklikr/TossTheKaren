@@ -1,33 +1,49 @@
 using UnityEngine;
 using UnityEngine.UI;
+
 public class Launcher : MonoBehaviour
 {
-    [SerializeField]
-    Slider LaunchBAR;
-    [SerializeField]
-    GameObject Player;
-    [SerializeField]
-    GameObject Cannon;
+    [SerializeField] Slider LaunchBAR;
+    [SerializeField] Transform RagdollRoot;
+    [SerializeField] Animator PlayerAnimator;
+    [SerializeField] GameObject Cannon;
 
     [Header("Force")]
-    [SerializeField] float ForceSpeed = 200f;     // bar units per second (higher = faster)
-    [SerializeField] float BounceForce = 20f; // force applied to the player when shooting them in the air
+    [SerializeField] float ForceSpeed = 200f;
+    [SerializeField] float MaxLaunchForce = 300f;
+    [SerializeField] float BounceForce = 20f;
 
     [Header("Angle")]
-    [SerializeField] float MaxAngle = 45f;        // cannon moves between 0 and 45 degrees
-    [SerializeField] float AngleSpeed = 60f;      // degrees per second
+    [SerializeField] float MaxAngle = 45f;
+    [SerializeField] float AngleSpeed = 60f;
 
-    float LaunchForce = 0f;
-    float MaxLaunchForce = 100f;
-
-    float launchAngle = 0f;
+    Rigidbody[] ragdollBodies;
+    float launchForce;
+    float launchAngle;
 
     bool forceMoving = true;
     bool angleMoving = true;
-    bool launched = false;
+    bool launched;
+    bool animatorWasEnabled;
 
     void Start()
     {
+        if (LaunchBAR == null || RagdollRoot == null || Cannon == null)
+        {
+            Debug.LogError("Assign the launch bar, ragdoll root, and cannon.", this);
+            enabled = false;
+            return;
+        }
+
+        ragdollBodies = RagdollRoot.GetComponentsInChildren<Rigidbody>();
+
+        if (ragdollBodies.Length == 0)
+        {
+            Debug.LogError("No rigidbodies found on the ragdoll.", this);
+            enabled = false;
+            return;
+        }
+        animatorWasEnabled = PlayerAnimator != null && PlayerAnimator.enabled;
         LaunchBAR.minValue = 0f;
         LaunchBAR.maxValue = MaxLaunchForce;
         LaunchBAR.value = 0f;
@@ -38,51 +54,68 @@ public class Launcher : MonoBehaviour
         if (launched) return;
 
         if (angleMoving)
-            UpdateAngle();
+        {
+            launchAngle = Mathf.PingPong(Time.time * AngleSpeed, MaxAngle);
+            Cannon.transform.localRotation = Quaternion.Euler(-launchAngle, 0f, 0f);
+        }
 
         if (forceMoving)
-            UpdateSlider();
+        {
+            launchForce = Mathf.PingPong(Time.time * ForceSpeed, MaxLaunchForce);
+            LaunchBAR.value = launchForce;
+        }
     }
 
-    // Stops the angle movement and keeps the current angle
     public void OnAngle()
     {
         angleMoving = false;
     }
 
-    // Stops the slider and launches the player with the current force and angle
     public void OnLaunch()
     {
-        if (launched) return;
+        if (!enabled || launched) return;
 
         forceMoving = false;
         angleMoving = false;
         launched = true;
 
-        Rigidbody rb = Player.GetComponent<Rigidbody>();
-        rb.linearVelocity = Vector3.zero;
-        rb.AddForce(Cannon.transform.forward * LaunchForce, ForceMode.Impulse);
-    }
-    void UpdateSlider()
-    {
-        LaunchForce = Mathf.PingPong(Time.time * ForceSpeed, MaxLaunchForce);
-        LaunchBAR.value = LaunchForce;
-    }
+        if (PlayerAnimator != null)
+            PlayerAnimator.enabled = false;
 
-    void UpdateAngle()
-    {
-        launchAngle = Mathf.PingPong(Time.time * AngleSpeed, MaxAngle);
-        Cannon.transform.localRotation = Quaternion.Euler(-launchAngle, 0f, 0f); // negative X tilts the cannon up
-    }
+        Vector3 launchVelocity = Cannon.transform.forward * launchForce;
 
+        foreach (Rigidbody rb in ragdollBodies)
+        {
+            rb.isKinematic = false;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.AddForce(launchVelocity, ForceMode.VelocityChange);
+        }
+    }
     public void OnBounce()
     {
-        if (!launched) return;
+        if (!enabled || !launched) return;
 
-        Rigidbody rb = Player.GetComponent<Rigidbody>();
-        Vector3 v = rb.linearVelocity;   // use rb.velocity on older Unity versions
-        v.y = 0f;                        // cancel the downward speed so the bounce is consistent
-        rb.linearVelocity = v;
-        rb.AddForce(Vector3.up * BounceForce, ForceMode.Impulse);
+        foreach (Rigidbody rb in ragdollBodies)
+        {
+            Vector3 velocity = rb.linearVelocity;
+            velocity.y = 0f;
+            rb.linearVelocity = velocity;
+            rb.AddForce(Vector3.up * BounceForce, ForceMode.VelocityChange);
+        }
+    }
+    public void ResetLauncher()
+    {
+        launched = false;
+        forceMoving = true;
+        angleMoving = true;
+        launchForce = 0f;
+        launchAngle = 0f;
+
+        LaunchBAR.value = 0f;
+        Cannon.transform.localRotation = Quaternion.identity;
+
+        if (PlayerAnimator != null)
+            PlayerAnimator.enabled = animatorWasEnabled;
     }
 }
