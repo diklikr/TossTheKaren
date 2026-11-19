@@ -15,6 +15,10 @@ public class UFO : MonoBehaviour
     [SerializeField] float DepartureSpeed = 10f;
     [SerializeField] float DisappearDelay = 3f;
 
+    [Header("Sound")]
+    [SerializeField] AudioSource ufoAudioSource;
+    [SerializeField] AudioClip ufoClip;
+
     struct BodyState
     {
         public Rigidbody body;
@@ -115,6 +119,8 @@ public class UFO : MonoBehaviour
 
             body.isKinematic = true;
         }
+        
+            ufoAudioSource.PlayOneShot(ufoClip);
 
         captured = true;
     }

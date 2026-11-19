@@ -11,6 +11,16 @@ public class PlayerHUD : MonoBehaviour
     [SerializeField] Button angleButton;
     [SerializeField] Button shootKaren;
 
+    [Header("Button sounds")]
+    [SerializeField] AudioSource audioSource;
+    [SerializeField] AudioClip launchSound;
+    [SerializeField] AudioClip angleSound;
+    [SerializeField] AudioClip bounceSound;
+
+    [Header("Explosion")]
+    [SerializeField] GameObject explosionPrefab;
+    [SerializeField] Transform explosionTransform;
+
     [Header("Force slider (shown with the launch button)")]
     [SerializeField] Slider launchSlider;
     [SerializeField] RawImage explod;
@@ -33,6 +43,15 @@ public class PlayerHUD : MonoBehaviour
     void Start()
     {
         ResetHUD();
+
+        if (audioSource == null)
+            Debug.LogWarning("Assign an AudioSource for button sounds.", this);
+
+        if (launchSound == null || angleSound == null || bounceSound == null)
+            Debug.LogWarning("Assign all three button sound clips.", this);
+
+        if (explosionPrefab == null || explosionTransform == null)
+            Debug.LogWarning("Assign the explosion prefab and transform.", this);
     }
 
     void Update()
@@ -77,8 +96,21 @@ public class PlayerHUD : MonoBehaviour
         distanceText.text = Mathf.FloorToInt(maxDistance) + "m";
     }
 
+    void PlaySound(AudioClip clip)
+    {
+        if (audioSource != null && clip != null)
+            audioSource.PlayOneShot(clip);
+    }
+
+    void SpawnExplosion()
+    {
+        if (explosionPrefab != null && explosionTransform != null)
+            Instantiate(explosionPrefab, explosionTransform.position, explosionTransform.rotation);
+    }
+
     public void SetAngle()
     {
+        PlaySound(angleSound);
         angleButton.gameObject.SetActive(false);
         launcher.OnAngle();
         launchButton.gameObject.SetActive(true);
@@ -88,6 +120,8 @@ public class PlayerHUD : MonoBehaviour
 
     public void LaunchButton()
     {
+        PlaySound(launchSound);
+        SpawnExplosion();
         launchButton.gameObject.SetActive(false);
         launchSlider.gameObject.SetActive(false);
         explod.gameObject.SetActive(false);
@@ -99,6 +133,8 @@ public class PlayerHUD : MonoBehaviour
     {
         if (bouncesLeft <= 0) return;
 
+        PlaySound(bounceSound);
+        SpawnExplosion();
         launcher.OnBounce();
 
         bounceImages[bounceImages.Count - bouncesLeft].gameObject.SetActive(false);

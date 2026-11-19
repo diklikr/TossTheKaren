@@ -20,6 +20,10 @@ public class BounceFloor : MonoBehaviour
     readonly Dictionary<Transform, HashSet<Collider>> touching =
         new Dictionary<Transform, HashSet<Collider>>();
 
+    [Header("Sound")]
+    [SerializeField] AudioSource bounceAudioSource;
+    [SerializeField] AudioClip bounceClip;
+
     void Start()
     {
         startScale = transform.localScale;
@@ -45,7 +49,7 @@ public class BounceFloor : MonoBehaviour
         Collider other = collision.collider;
         Transform root = FindPlayerRoot(other.transform);
         if (root == null) return;
-
+        bounceAudioSource.PlayOneShot(bounceClip);
         if (touching.TryGetValue(root, out HashSet<Collider> colliders))
         {
             colliders.Add(other);
