@@ -6,17 +6,14 @@ public class skybox : MonoBehaviour
 
     [Header("Starting distance")]
     [SerializeField] Material startLow;
-    [SerializeField] Material startMiddle;
     [SerializeField] Material startHigh;
 
     [Header("Middle distance")]
     [SerializeField] Material middleLow;
-    [SerializeField] Material middleMiddle;
     [SerializeField] Material middleHigh;
 
     [Header("Far distance")]
     [SerializeField] Material farLow;
-    [SerializeField] Material farMiddle;
     [SerializeField] Material farHigh;
 
     [Header("Distance thresholds (world X)")]
@@ -24,7 +21,6 @@ public class skybox : MonoBehaviour
     [SerializeField] float farStartsAt = 2000f;
 
     [Header("Height thresholds (world Y)")]
-    [SerializeField] float middleHeightStartsAt = 100f;
     [SerializeField] float highHeightStartsAt = 500f;
 
     Material currentSkybox;
@@ -32,19 +28,18 @@ public class skybox : MonoBehaviour
     void Start()
     {
         if (player == null ||
-            startLow == null || startMiddle == null || startHigh == null ||
-            middleLow == null || middleMiddle == null || middleHigh == null ||
-            farLow == null || farMiddle == null || farHigh == null)
+            startLow == null || startHigh == null ||
+            middleLow == null || middleHigh == null ||
+            farLow == null || farHigh == null)
         {
-            Debug.LogError("Assign the player and all nine skybox materials.", this);
+            Debug.LogError("Assign the player and all six skybox materials.", this);
             enabled = false;
             return;
         }
 
-        if (farStartsAt <= middleStartsAt ||
-            highHeightStartsAt <= middleHeightStartsAt)
+        if (farStartsAt <= middleStartsAt)
         {
-            Debug.LogError("Higher zone thresholds must be greater than lower thresholds.", this);
+            Debug.LogError("farStartsAt must be greater than middleStartsAt.", this);
             enabled = false;
             return;
         }
@@ -59,25 +54,16 @@ public class skybox : MonoBehaviour
 
     void UpdateSkybox()
     {
-        Material next;
         float x = player.position.x;
-        float y = player.position.y;
+        bool high = player.position.y >= highHeightStartsAt;
 
+        Material next;
         if (x >= farStartsAt)
-        {
-            next = y >= highHeightStartsAt ? farHigh :
-                   y >= middleHeightStartsAt ? farMiddle : farLow;
-        }
+            next = high ? farHigh : farLow;
         else if (x >= middleStartsAt)
-        {
-            next = y >= highHeightStartsAt ? middleHigh :
-                   y >= middleHeightStartsAt ? middleMiddle : middleLow;
-        }
+            next = high ? middleHigh : middleLow;
         else
-        {
-            next = y >= highHeightStartsAt ? startHigh :
-                   y >= middleHeightStartsAt ? startMiddle : startLow;
-        }
+            next = high ? startHigh : startLow;
 
         if (next != currentSkybox)
         {
